@@ -15,6 +15,7 @@ export default function Home() {
         <Header title={title} />
 
         <form name="contact" method="POST" data-netlify="true">
+          <input type="hidden" name="title" value="contact" />
           <p>
             <label>Your Name: <input type="text" name="name" /></label>   
           </p>
