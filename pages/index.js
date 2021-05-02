@@ -1,43 +1,87 @@
+import { useState } from 'react';
 import Head from 'next/head'
 import Header from '@components/Header'
-import Footer from '@components/Footer'
+
+function encode(data) {
+  return Object.keys(data)
+      .map(key => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
+      .join("&")
+}
 
 export default function Home() {
-  const title = 'techpod.recipes'
+  const [hidden, setHidden] = useState('');
+  const [title, setTitle] = useState('');
+  const [rec, setRec] = useState('');
+  const [body, setBody] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const websiteTitle = 'techpod.recipes'
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const data = encode({
+      hidden,
+      title,
+      rec,
+      body
+    })
+
+    console.log(data)
+
+    fetch("/api/add", {
+      method: "POST",
+      body: encode({
+        hidden,
+        title,
+        rec,
+        body
+      })
+    })
+      .then((data) => data.json())
+      .then(val => {
+        console.log(val)
+        setSubmitted(true)
+      })
+  }
+
   return (
     <div className="container">
       <Head>
-        <title>{title}</title>
+        <title>{websiteTitle}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main>
-        <Header title={title} />
+        <Header title={websiteTitle} />
 
-        <form name="contact" method="POST" data-netlify="true">
-          <input type="hidden" name="title" value="contact" />
+        {!submitted && (
+        <form name="contact" onSubmit={handleSubmit}>
+          <input type="hidden" name="name" value={hidden} onChange={({ target: { value }}) => setHidden(value)} />
           <p>
-            <label>Your Name: <input type="text" name="name" /></label>   
+            <label>Your Name:
+              <input
+                type="text"
+                name="title"
+                value={title}
+                onChange={({target: { value }}) => setTitle(value)}
+              />
+            </label>   
           </p>
           <p>
-            <label>Your Email: <input type="email" name="email" /></label>
+            <label>Recommended by: <input type="text" name="rec" value={rec} onChange={({ target: { value }}) => setRec(value)} /></label>
           </p>
           <p>
-            <label>Your Role: <select name="role[]" multiple>
-              <option value="leader">Leader</option>
-              <option value="follower">Follower</option>
-            </select></label>
-          </p>
-          <p>
-            <label>Message: <textarea name="message"></textarea></label>
+            <label>Body: <textarea name="body" value={body} onChange={({ target: { value }}) => setBody(value)}></textarea></label>
           </p>
           <p>
             <button type="submit">Send</button>
           </p>
         </form>
+        )}
+        {submitted && (
+          <div>Form Sent</div>
+        )}
       </main>
-
-      <Footer />
     </div>
   )
 }
