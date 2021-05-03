@@ -1,14 +1,42 @@
 import { useState } from 'react';
 import Head from 'next/head'
+import { gql, useQuery } from '@apollo/client';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
 import Header from '@components/Header'
 
-function encode(data) {
-  return Object.keys(data)
-      .map(key => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
-      .join("&")
+export const getServerSideProps = async () => {
+  const client = new ApolloClient({
+    uri: process.env.REACT_APP_GRAPHQL_ENDPOINT,
+    headers: {
+      'x-api-key': process.env.REACT_APP_GRAPHQL_API_KEY
+    },
+    cache: new InMemoryCache()
+  });
+
+  const { data } = await client.query({
+    query: gql`
+      query {
+        listFood {
+          createdAt
+          deleted
+          author
+          content
+          deck
+          modifiedAt
+          slug
+          title
+          type
+        }
+      }  
+    `
+  });
+
+  console.log(data)
+  return { props: data }
 }
 
-export default function Home() {
+export default function Home({listFood}) {
+  console.log(listFood)
   const [hidden, setHidden] = useState('');
   const [title, setTitle] = useState('');
   const [rec, setRec] = useState('');
@@ -19,29 +47,6 @@ export default function Home() {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const data = encode({
-      hidden,
-      title,
-      rec,
-      body
-    })
-
-    console.log(data)
-
-    fetch("/api/add", {
-      method: "POST",
-      body: encode({
-        hidden,
-        title,
-        rec,
-        body
-      })
-    })
-      .then((data) => data.json())
-      .then(val => {
-        console.log(val)
-        setSubmitted(true)
-      })
   }
 
   return (
@@ -54,7 +59,7 @@ export default function Home() {
       <main>
         <Header title={websiteTitle} />
 
-        {!submitted && (
+        {/* {!submitted && (
         <form name="contact" onSubmit={handleSubmit}>
           <input type="hidden" name="name" value={hidden} onChange={({ target: { value }}) => setHidden(value)} />
           <p>
@@ -80,7 +85,16 @@ export default function Home() {
         )}
         {submitted && (
           <div>Form Sent</div>
+        )} */}
+
+        {listFood.length > 0 && (
+          <ul>
+        {listFood.map(i => (
+          <li key={i.slug}>{i.title}</li>
+        ))}
+          </ul>          
         )}
+
       </main>
     </div>
   )
